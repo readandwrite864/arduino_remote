@@ -52,7 +52,6 @@ void send()
   Serial.print(F(", repeats="));
   Serial.print(sRepeats);
   Serial.println();
-  Serial.flush();
 
   IrSender.sendNEC(sAddress, sCommand, sRepeats);
 }
@@ -105,5 +104,4 @@ void print()
   }
 
   Serial.println();
-  Serial.flush();
 }

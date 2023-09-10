@@ -5,18 +5,20 @@ baud_rate=115200
 mode=mouse
 step=5
 delta=$step
+power=true
 
 stty $baud_rate -F $device raw -echo
 
 handle_shared() {
   case "$line" in
-    *KEY_ENTER*)       xdotool click 1;;
-    # *KEY_RETURN*) echo "ret";;
+    *KEY_POWER*)   [[ $power == true ]] && power=false || sudo $(which shutdown) now;;
+    *KEY_ENTER*)   xdotool click 1;;
+    *KEY_EXIT*)    [[ $repeat == true ]] || xdotool key ctrl+w;;
 
-    # *KEY_A*) echo "a";;
-    # *KEY_B*) echo "b";;
-    # *KEY_C*) echo "c";;
-    # *KEY_D*) echo "d";;
+    KEY_A) [[ $repeat == true ]] || xdotool key super+w && sleep 1 && xdotool key ctrl+l && xdotool type "youtube.com" && xdotool key Return;;
+    KEY_B) [[ $repeat == true ]] || xdotool click 2;;
+    KEY_C) [[ $repeat == true ]] || xdotool key ctrl+shift+Tab;;
+    KEY_D) [[ $repeat == true ]] || xdotool key ctrl+Tab;;
   esac
 }
 
@@ -30,7 +32,7 @@ handle_mouse() {
     *KEY_ARROW_DOWN*)  dy=$delta;;
     *KEY_ARROW_LEFT*)  dx=-$delta;;
 
-    *KEY_EXIT*)        mode="keyboard";;
+    *KEY_RETURN*)        [[ $repeat == true ]] || mode="keyboard";;
   esac
 
   xdotool mousemove_relative -- $dx $dy
@@ -45,10 +47,10 @@ handle_keyboard() {
     *KEY_ARROW_DOWN*)  key=Down;;
     *KEY_ARROW_LEFT*)  key=Left;;
 
-    *KEY_EXIT*)        mode="mouse";;
+    *KEY_RETURN*)        [[ $repeat == true ]] || mode="mouse";;
   esac
 
-  [[ $key ]] && xdotool key $key
+  [[ $key == false ]] || xdotool key $key
 }
 
 handle_command() {
@@ -61,12 +63,12 @@ handle_command() {
   fi
 }
 
-while read -r line; do
+while IFS=$'\r\n' read -r line; do
   echo "$line"
 
   case "$line" in
-    *Repeat*)  delta=$(($delta * 2));;
-    *Command*) delta=$step;;
+    *Repeat*)  delta=$(($delta * 2)); repeat=true;;
+    *Command*) delta=$step;           repeat=false;;
     *)         handle_command;;
   esac
 done < "$device"
